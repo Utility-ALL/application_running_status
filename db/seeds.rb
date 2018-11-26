@@ -1,0 +1,1 @@
+AddMachine.create!

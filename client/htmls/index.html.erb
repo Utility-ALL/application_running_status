@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Application Running Status</title>
+    <style>
+      .blink_me {
+        border: 2px solid #a1a1a1;
+        padding: 10px 11px;
+        background: grey;
+        width: 2px;
+        border-radius: 100%;
+        width: 1%;
+        animation: blinker 1s step-start infinite;
+      }
+      @keyframes blinker {
+        20% {
+          opacity: 0;
+        }
+      }
+  </style>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Running Status</h1>
+      <p>We can view the running status of application along with each sec ping details in log file...................</p>
+      <a href="add">Add</a>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>IP Address</th>
+            <th>Port</th>
+            <th>Protocol</th>
+            <th>Status</th>
+            <th>Logs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% $application_details.each{ |machine|%>
+		      <%if(machine.ip_address!=nil)%>
+            <tr id="<%=machine.id%>" data="complete">
+              <td id="ip_address"><%=machine.ip_address%></td>
+              <td id="port"><%=machine.port%></td>
+              <td id="porto"><%=machine.proto%></td>
+              <td><div class="blink_me" id="status"></div></td>
+              <td><a href="#results<%=machine.id%>" data-toggle="collapse">Logs</a><div id="results<%=machine.id%>" class="collapse"></div></td>
+              <td><a href="delete/<%=machine.id%>">Remove</a></td>
+			      </tr>
+          <%end%>
+          <%}%>
+        </tbody>
+      </table>
+    </div>
+    <script type="text/javascript">
+      $(window).on('load', function(){
+        window.setInterval(function(){
+                  $('tbody>tr').each(function(index){
+                  that = this;
+                  if($(that).attr('data')=='complete'){
+                  $.get($(this).find('#porto').text()+'://'+$(this).find('#ip_address').text()+':'+$(this).find('#port').text(), {id: $(this).attr('id')}, 
+                  function(data) {
+                   $(that).attr('data', 'waiting');
+					        }).done(function(data, textStatus, xhr) {
+                    id = this.url.split('?id=')[1];
+                    if(textStatus=='success'){
+                      $('table tbody>tr[id='+id+']').attr('data', 'complete');
+                      $('table tbody>tr[id='+id+']').find(".blink_me").css({'background':'green','display':'block'})
+                      $('table tbody>tr[id='+id+']').find("#results"+id).append('<p>'+this.url.split('?')[0].replace('//','').split(':')[1]+" : "+ new Date($.now()) + " | Response Code " +xhr.status+ '</p>')
+                    }
+					          }).fail(function(data, textStatus, xhr) {
+                      id = this.url.split('?id=')[1];
+		  				        if(textStatus=='error'){
+                      $('table tbody>tr[id='+id+']').attr('data', 'complete');
+				  			      $('table tbody>tr[id='+id+']').find(".blink_me").css({'background':'red','display':'block'});
+                      $('table tbody>tr[id='+id+']').find("#results"+id).append('<p>'+this.url.split('?')[0].replace('//','').split(':')[1]+" : "+ new Date($.now()) + " | Response Code " +xhr.status+ '</p>')
+ 				      		  }
+        					  })
+                  }
+                 });
+        },3000)
+      });
+   </script>
+  </body>
+</html>
